@@ -13,7 +13,7 @@ import qualified Oden.Type.Monomorphic as Mono
 import qualified Oden.Type.Polymorphic as Poly
 
 data InstantiateError = TypeMismatch Poly.Type Mono.Type
-                      | SubstitutionFailed Poly.TVar [Poly.TVar]
+                      | SubstitutionFailed SourceInfo Poly.TVar [Poly.TVar]
                       deriving (Show, Eq, Ord)
 
 type Substitutions = Map Poly.TVar Poly.Type
@@ -75,7 +75,7 @@ replace (Poly.TVar si v) = do
   s <- get
   case Map.lookup v s of
     Just mono -> return (setSourceInfo si mono)
-    Nothing -> throwError (SubstitutionFailed v (Map.keys s))
+    Nothing -> throwError (SubstitutionFailed si v (Map.keys s))
 replace (Poly.TCon si n) = return (Poly.TCon si n)
 replace (Poly.TNoArgFn si t) = Poly.TNoArgFn si <$> replace t
 replace (Poly.TFn si ft pt) = Poly.TFn si <$> replace ft <*> replace pt

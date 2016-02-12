@@ -23,11 +23,12 @@ instance OdenOutput MonomorphError where
   details (UnexpectedPolyType _) _  = text "This can usually be fixed by adding (stricter) type signatures to top-level forms."
   details _ _                       = empty
 
+  sourceInfo (MonomorphInstantiateError e) = sourceInfo e
   sourceInfo _ = Nothing
 
 instance OdenOutput CompilationError where
-  outputType (MonomorphError e)   = outputType e
-  name (MonomorphError e)         = name e
-  header (MonomorphError e)       = header e
-  details (MonomorphError e)      = details e
-  sourceInfo _ = Nothing
+  outputType (MonomorphError e) = outputType e
+  name (MonomorphError e)       = name e
+  header (MonomorphError e)     = header e
+  details (MonomorphError e)    = details e
+  sourceInfo (MonomorphError e) = sourceInfo e
