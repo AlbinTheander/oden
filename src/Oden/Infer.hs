@@ -75,7 +75,7 @@ instance Substitutable Env where
 data TypeError
   = UnificationFail Type Type
   | InfiniteType TVar Type
-  | NotInScope Identifier
+  | NotInScope SourceInfo Identifier
   | Ambigious [Constraint]
   | UnificationMismatch [Type] [Type]
   | ArgumentCountMismatch (Core.Expr Type) [Type] [Type]
@@ -120,11 +120,11 @@ inEnv (x, sc) m = do
   local scope m
 
 -- | Lookup type in the environment
-lookupEnv :: Identifier -> Infer Type
-lookupEnv x = do
+lookupEnv :: SourceInfo -> Identifier -> Infer Type
+lookupEnv si x = do
   (TypeEnv env) <- ask
   case Map.lookup x env of
-      Nothing   ->  throwError $ NotInScope x
+      Nothing   ->  throwError $ NotInScope si x
       Just s    ->  instantiate s
 
 letters :: [String]
@@ -179,7 +179,7 @@ infer expr = case expr of
     return (Core.Op si o te1 te2 rt)
 
   Untyped.Symbol si x -> do
-    t <- lookupEnv x
+    t <- lookupEnv si x
     return $ Core.Symbol si x t
 
   Untyped.Fn si (Untyped.Binding bsi a) b -> do
@@ -195,12 +195,12 @@ infer expr = case expr of
     tv <- fresh si
     tf <- infer f
     case Core.typeOf tf of
-      t@(TUncurriedFn _ rt _) -> do
+      t@(TUncurriedFn _ _ _) -> do
         uni t (TUncurriedFn (getSourceInfo tf) [] tv)
         return (Core.UncurriedFnApplication si tf [] tv)
       -- No-param application of variadic function is automatically transformed
       -- to application of empty slice.
-      t@(TVariadicFn _ [] variadicArg rt) -> do
+      t@(TVariadicFn _ [] variadicArg _) -> do
         uni t (TVariadicFn (getSourceInfo tf) [] variadicArg tv)
         return (Core.UncurriedFnApplication si tf [Core.Slice (getSourceInfo variadicArg) [] variadicArg] tv)
       TVariadicFn _ nonVariadicArgs _ _ ->
