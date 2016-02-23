@@ -16,6 +16,7 @@ import           Oden.Parser
 import           Oden.Predefined
 import           Oden.Scanner
 import           Oden.SourceInfo
+import           Oden.Simplify
 import qualified Oden.Environment                as Environment
 import qualified Oden.Syntax                     as Syntax
 
@@ -41,6 +42,9 @@ validatePkg :: Core.Package -> CLI ()
 validatePkg pkg = do
   warnings <- liftEither (validate pkg)
   mapM_ logWarning warnings
+
+simplifyPkg :: Core.Package -> CLI Core.Package
+simplifyPkg pkg = return (simplifyPackage pkg)
 
 logCompiledFiles :: [CompiledFile] -> CLI ()
 logCompiledFiles [_] = liftIO $ putStrLn "Compiled 1 Go source file."
@@ -72,8 +76,9 @@ compileFile (OdenSourceFile fname _) = do
   let env' = fromDefinitions predefined `Environment.merge` importsEnvironment
       typeEnv = Environment.map compileToTypeBinding env'
   (inferredPkg, _) <- liftEither (inferPackage typeEnv corePkg)
-  validatePkg inferredPkg
-  liftEither (compile env' inferredPkg)
+  simplifiedPkg <- simplifyPkg inferredPkg
+  validatePkg simplifiedPkg
+  liftEither (compile env' simplifiedPkg)
 
 codegenPkg :: MonomorphedPackage -> CLI [CompiledFile]
 codegenPkg compiledPkg = do

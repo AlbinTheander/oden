@@ -62,6 +62,7 @@ library
     Oden.Parser,
     Oden.Predefined,
     Oden.Pretty,
+    Oden.Simplify,
     Oden.SourceInfo,
     Oden.Syntax,
     Oden.Scanner,
